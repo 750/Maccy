@@ -105,8 +105,9 @@ class Search {
     of item: Searchable,
     options: NSString.CompareOptions
   ) -> SearchResult? {
-    if let range = searchString.range(of: string, options: options, range: nil, locale: nil) {
-      return SearchResult(object: item, ranges: [range])
+      let range = NSString(string: searchString).range(of: string, options: options);
+      if  range.location != NSNotFound {
+          return SearchResult(object: item, ranges: Array([Range(range, in: searchString)!]))
     } else {
       return nil
     }

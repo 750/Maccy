@@ -77,7 +77,8 @@ class HistoryItem {
     }
 
     // 1k characters is trade-off for performance
-    var title = previewableText.shortened(to: 1_000)
+      var title = previewableText;
+//      var title = previewableText.shortened(to: 1_000)
 
     if Defaults[.showSpecialSymbols] {
       if let range = title.range(of: "^ +", options: .regularExpression) {
