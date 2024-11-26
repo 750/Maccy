@@ -1,6 +1,7 @@
 import AppKit
 import Defaults
 import Fuse
+import Foundation
 
 class Search {
   enum Mode: String, CaseIterable, Identifiable, CustomStringConvertible, Defaults.Serializable {
@@ -96,21 +97,56 @@ class Search {
     within: [Searchable],
     options: NSString.CompareOptions
   ) -> [SearchResult] {
-    return within.compactMap { simpleSearch(for: string, in: $0.title, of: $0, options: options) }
+      let totalSize = within.compactMap({ $0.title.count }).reduce(0, +);
+      let totalCount = within.count;
+      NSLog("Maccy845 new search, query char count: \(string.count)");
+      NSLog("Maccy845 totalSize: \(totalSize) totalCount: \(totalCount)")
+      
+      var ts = Date().timeIntervalSince1970;
+      let StringRes = within.compactMap { simpleSearch(for: string, in: $0.title, of: $0, options: options, algo: "String") };
+      let StringDuration = Date().timeIntervalSince1970-ts;
+      NSLog("""
+      Maccy845 StringDuration: \(String(format: "%5.3f", StringDuration)) StringFound: \(StringRes.count)
+""")
+      
+      ts = Date().timeIntervalSince1970;
+      let NSStringRes = within.compactMap { simpleSearch(for: string, in: $0.title, of: $0, options: options, algo: "NSString") };
+      let NSStringDuration = Date().timeIntervalSince1970-ts;
+      NSLog("""
+      Maccy845 NSStringDuration: \(String(format: "%5.3f", NSStringDuration))  NSStringFound: \(NSStringRes.count)
+""")
+      NSLog("--------------------")
+      return NSStringRes
   }
 
   private func simpleSearch(
     for string: String,
     in searchString: String,
     of item: Searchable,
-    options: NSString.CompareOptions
+    options: NSString.CompareOptions,
+    algo: String = "String"
   ) -> SearchResult? {
-      let range = NSString(string: searchString).range(of: string, options: options);
-      if  range.location != NSNotFound {
-          return SearchResult(object: item, ranges: Array([Range(range, in: searchString)!]))
-    } else {
-      return nil
-    }
+      let ts = Date().timeIntervalSince1970;
+      var range: Range<String.Index>? = nil;
+      if algo == "String" {
+          range = searchString.range(of: string, options: options);
+          
+          if  range != nil {
+              return SearchResult(object: item, ranges: Array([range!]))
+          } else {
+              return nil
+            }
+      } else {
+          let trange = NSString(string: searchString).range(of: string, options: options);
+          
+          if  trange.location != NSNotFound {
+              return SearchResult(object: item, ranges: Array([Range(trange, in: searchString)!]))
+          } else {
+              return nil
+            }
+      }
+//      print(searchString.count, "  String", Date().timeIntervalSince1970-ts)
+      
   }
 
   private func mixedSearch(string: String, within: [Searchable]) -> [SearchResult] {
